@@ -1,9 +1,9 @@
 locals {
-  namespace       = var.namespace
-  app             = var.app
-  version         = var.app_version
-  docker_image    = var.docker_image
-  container_port  = var.container_port
+  namespace      = var.namespace
+  app            = var.app
+  version        = var.app_version
+  docker_image   = var.docker_image
+  container_port = var.container_port
 }
 
 resource "kubernetes_namespace" "monolith_namespace" {
@@ -24,7 +24,7 @@ resource "kubernetes_deployment" "monolith_deployment" {
   metadata {
     name      = local.app
     namespace = local.namespace
-    labels    = {
+    labels = {
       app     = local.app
       version = local.version
     }
@@ -40,7 +40,7 @@ resource "kubernetes_deployment" "monolith_deployment" {
     template {
       metadata {
         labels = {
-          app = local.app
+          app     = local.app
           version = local.version
         }
       }
@@ -48,7 +48,7 @@ resource "kubernetes_deployment" "monolith_deployment" {
         container {
           image = local.docker_image
           name  = local.app
-          args  = [ "-listen=:${local.container_port}", "-text=${local.app}" ]
+          args  = ["-listen=:${local.container_port}", "-text=${local.app}"]
 
           port {
             container_port = local.container_port
