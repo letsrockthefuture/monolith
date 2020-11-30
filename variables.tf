@@ -18,9 +18,9 @@ variable "app_version" {
   default = "v1"
 }
 
-variable "zone" {
-  type    = string
-  default = "us-east1-b"
+variable "replicas" {
+  type    = number
+  default = "1"
 }
 
 variable "docker_image" {
@@ -30,6 +30,6 @@ variable "docker_image" {
 }
 
 variable "container_port" {
-  type    = string
-  default = "8080"
+  type    = number
+  default = "80"
 }

@@ -1,7 +1,8 @@
 locals {
-  namespace      = var.namespace
   app            = var.app
+  namespace      = var.namespace
   version        = var.app_version
+  replicas       = var.replicas
   docker_image   = var.docker_image
   container_port = var.container_port
 }
@@ -13,7 +14,8 @@ resource "kubernetes_namespace" "monolith_namespace" {
     }
 
     labels = {
-      app = local.app
+      app             = local.app
+      istio-injection = "enabled"
     }
 
     name = local.namespace
@@ -31,7 +33,7 @@ resource "kubernetes_deployment" "monolith_deployment" {
   }
 
   spec {
-    replicas = 1
+    replicas = local.replicas
     selector {
       match_labels = {
         app = local.app
@@ -48,20 +50,20 @@ resource "kubernetes_deployment" "monolith_deployment" {
         container {
           image = local.docker_image
           name  = local.app
-          args  = ["-listen=:${local.container_port}", "-text=${local.app}"]
+          args  = ["-listen=:${local.container_port}", "-text=Service: ${local.app}.${local.app}.svc.cluster.local"]
 
           port {
             container_port = local.container_port
           }
 
           resources {
-            limits {
-              cpu    = "0.5"
-              memory = "512Mi"
-            }
             requests {
-              cpu    = "250m"
-              memory = "50Mi"
+              cpu    = "25m"
+              memory = "64Mi"
+            }
+            limits {
+              cpu    = "50m"
+              memory = "128Mi"
             }
           }
           liveness_probe {
@@ -74,6 +76,9 @@ resource "kubernetes_deployment" "monolith_deployment" {
             period_seconds        = 3
           }
         }
+        node_selector = {
+          "app" = local.app
+        }
       }
     }
   }
@@ -83,9 +88,37 @@ resource "kubernetes_deployment" "monolith_deployment" {
   ]
 }
 
-resource "kubernetes_service" "monolith_service" {
+resource "kubernetes_service" "monolith_private_service" {
   metadata {
-    name      = "${local.app}-service"
+    name      = local.app
+    namespace = local.namespace
+
+    labels = {
+      app = local.app
+    }
+  }
+
+  spec {
+    selector = {
+      app = kubernetes_deployment.monolith_deployment.metadata.0.labels.app
+    }
+
+    type = "ClusterIP"
+
+    port {
+      port = local.container_port
+    }
+  }
+
+  depends_on = [
+    kubernetes_namespace.monolith_namespace,
+    kubernetes_deployment.monolith_deployment
+  ]
+}
+
+resource "kubernetes_service" "monolith_public_service" {
+  metadata {
+    name      = "${local.app}-public"
     namespace = local.namespace
 
     labels = {
