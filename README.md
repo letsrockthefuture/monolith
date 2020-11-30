@@ -1,6 +1,4 @@
-# Monolith
-
-[![Hash][logo]](images/hash.png)
+# Monolith (3rd)
 
 Monolith is a single application that handles /cart and /checkout, and that was developed following the infrastructure standard as code using Terraform.
 
@@ -17,6 +15,12 @@ Initializing Terraform and applying it's settings:
 ```bash
 terraform init
 terraform apply
+```
+
+To clean:
+
+```bash
+make clean
 ```
 
 ## Contributing
